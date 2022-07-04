@@ -1,12 +1,14 @@
 require('dotenv').config();
 
 const express = require('express');
-
 const db = require("./config/database");
 const HttpError = require('./models/http-error');
-const usersRoutes = require('./routes/users-routes');
-
+const authRoutes = require('./routes/auth-routes');
 const app = express();
+
+// Connect database
+db.connect();
+
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -21,7 +23,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/users', usersRoutes);
+app.use('/api/auth', authRoutes);
 app.use((req, res, next) => {
 	const error = new HttpError('Could not find this route.', 404);
 	throw error;
@@ -36,10 +38,7 @@ app.use((error, req, res, next) => {
 	res.json({ message: error.message || 'An unknown error occurred!' });
 });
 
-// Connect database
-db.connectDB().then(() => {
-	app.listen(process.env.PORT, () => {
-		console.log(`Server started at http://localhost:${process.env.PORT}/`);
-		console.log("Database connected.");
-	});
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+	console.log(`Server started at http://localhost:${PORT}/`);
 });
