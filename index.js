@@ -4,6 +4,7 @@ const express = require('express');
 const db = require("./config/database");
 const HttpError = require('./models/http-error');
 const authRoutes = require('./routes/auth-routes');
+const examRoutes = require('./routes/exam-routes');
 const app = express();
 
 // Connect database
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use('/api/exams', examRoutes);
 app.use('/api/auth', authRoutes);
 app.use((req, res, next) => {
 	const error = new HttpError('Could not find this route.', 404);

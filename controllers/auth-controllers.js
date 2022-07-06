@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 const HttpError = require('../models/http-error');
-const RefreshToken = require('../models/refreshToken');
+const RefreshToken = require('../models/refresh-token');
 const User = require('../models/user');
 
 const signup = async (req, res, next) => {
@@ -14,7 +14,7 @@ const signup = async (req, res, next) => {
 		);
 	}
 
-	const { name, phone, email, password, grade, birthday } = req.body;
+	const { name, phone, email, password, grade, birthday, role } = req.body;
 
 	let existingUser;
 	try {
@@ -55,7 +55,8 @@ const signup = async (req, res, next) => {
 		email,
 		password: hashedPassword,
 		grade,
-		birthday
+		birthday,
+		role
 	});
 
 	try {

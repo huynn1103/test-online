@@ -8,31 +8,6 @@ const getCoordsForAddress = require('../util/location');
 const Place = require('../models/place');
 const User = require('../models/user');
 
-const getPlaceById = async (req, res, next) => {
-	const placeId = req.params.pid;
-
-	let place;
-	try {
-		place = await Place.findById(placeId);
-	} catch (err) {
-		const error = new HttpError(
-			'Something went wrong, could not find a place.',
-			500
-		);
-		return next(error);
-	}
-
-	if (!place) {
-		const error = new HttpError(
-			'Could not find place for the provided id.',
-			404
-		);
-		return next(error);
-	}
-
-	res.json({ place: place.toObject({ getters: true }) });
-};
-
 const getPlacesByUserId = async (req, res, next) => {
 	const userId = req.params.uid;
 
@@ -218,7 +193,6 @@ const deletePlace = async (req, res, next) => {
 	res.status(200).json({ message: 'Deleted place.' });
 };
 
-exports.getPlaceById = getPlaceById;
 exports.getPlacesByUserId = getPlacesByUserId;
 exports.createPlace = createPlace;
 exports.updatePlace = updatePlace;

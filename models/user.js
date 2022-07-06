@@ -10,7 +10,8 @@ const userSchema = new Schema(
 		email: { type: String, required: true, unique: true },
 		password: { type: String, required: true, minlength: 6 },
 		grade: { type: Number, required: true, min: 1, max: 12 },
-		birthday: { type: Date, required: true }
+		birthday: { type: Date, required: true },
+		role: { type: String, default: "user" }
 	},
 	{
 		timestamps: true
