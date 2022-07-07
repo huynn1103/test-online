@@ -3,10 +3,10 @@ const fs = require('fs');
 const { validationResult } = require('express-validator');
 const mongoose = require('mongoose');
 
-const HttpError = require('../models/http-error');
+const HttpError = require('../model/http-error');
 const getCoordsForAddress = require('../util/location');
-const Place = require('../models/place');
-const User = require('../models/user');
+const Place = require('../model/place');
+const User = require('../model/user');
 
 const getPlacesByUserId = async (req, res, next) => {
 	const userId = req.params.uid;

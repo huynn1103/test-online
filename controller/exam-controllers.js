@@ -1,23 +1,22 @@
 
-const HttpError = require('../models/http-error');
-const Exam = require('../models/exam');
+const HttpError = require('../model/http-error');
+const Exam = require('../model/exam');
 
 const getAllExams = async (req, res, next) => {
     let exams;
+
     try {
         exams = await Exam.find();
     } catch (err) {
-        const error = new HttpError(
-            'Fetching exams failed, please try again later.',
-            500
-        );
-        return next(error);
+        return next(new HttpError(
+            `Fetching exams failed, please try again later. ${err.message}`, 500
+        ));
     }
 
     if (!exams || exams.length === 0) {
-        return next(
-            new HttpError('Could not find exams.', 404)
-        );
+        return next(new HttpError(
+            'Could not find exams.', 404
+        ));
     }
 
     res.json({
@@ -37,11 +36,9 @@ const createExam = async (req, res, next) => {
     try {
         await exam.save();
     } catch (err) {
-        const error = new HttpError(
-            'Create exam failed, please try again later.',
-            500
-        );
-        return next(error);
+        return next(new HttpError(
+            `Create exam failed, please try again later. ${err.message}`, 500
+        ));
     }
 
     res.json({ exam });

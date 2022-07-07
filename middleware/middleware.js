@@ -1,5 +1,5 @@
-const HttpError = require('../models/http-error');
-const User = require('../models/user');
+const HttpError = require('../model/http-error');
+const User = require('../model/user');
 
 module.exports = function hasRole(roles) {
     return async (req, res, next) => {

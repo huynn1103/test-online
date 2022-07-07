@@ -2,9 +2,9 @@ require('dotenv').config();
 
 const express = require('express');
 const db = require("./config/database");
-const HttpError = require('./models/http-error');
-const authRoutes = require('./routes/auth-routes');
-const examRoutes = require('./routes/exam-routes');
+const HttpError = require('./model/http-error');
+const authRoutes = require('./route/auth-routes');
+const examRoutes = require('./route/exam-routes');
 const app = express();
 
 // Connect database

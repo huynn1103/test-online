@@ -1,9 +1,9 @@
 const express = require('express');
 
-const examController = require('../controllers/exam-controllers');
+const examController = require('../controller/exam-controllers');
 
-const auth = require("../middlewares/check-auth");
-const hasRole = require("../middlewares/has-roles");
+const auth = require("../middleware/check-auth");
+const hasRole = require("../middleware/middleware");
 
 const router = express.Router();
 
