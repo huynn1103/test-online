@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const { validateEmail, validatePhone } = require('../util/regex');
 
 const HttpError = require('../model/http-error');
-const RefreshToken = require('../model/refresh-token');
 const User = require('../model/user');
 
 const signup = async (req, res, next) => {
@@ -72,22 +71,11 @@ const signup = async (req, res, next) => {
 		));
 	}
 
-	let token;
-	try {
-		token = jwt.sign(
-			{ userId: createdUser.id },
-			process.env.ACCESS_TOKEN_SECRET,
-			{ expiresIn: process.env.jwtExpiration }
-		);
-	} catch (err) {
-		return next(new HttpError(
-			`Signing up failed, please try again later. ${err.message}`, 500
-		));
-	}
-
 	res
 		.status(201)
-		.json({ userId: createdUser.id, token: token });
+		.json({
+			userId: createdUser.id
+		});
 };
 
 const login = async (req, res, next) => {
@@ -128,17 +116,40 @@ const login = async (req, res, next) => {
 	}
 
 	let token;
-	let refreshToken;
 	try {
 		token = jwt.sign(
 			{ userId: existingUser.id },
 			process.env.ACCESS_TOKEN_SECRET,
 			{ expiresIn: process.env.jwtExpiration }
 		);
-		refreshToken = await RefreshToken.createToken(existingUser);
 	} catch (err) {
 		return next(new HttpError(
 			`Logging in failed, please try again later. ${err.message}`, 500
+		));
+	}
+
+	let refreshToken;
+	try {
+		refreshToken = jwt.sign(
+			{ userId: existingUser.id },
+			process.env.ACCESS_TOKEN_SECRET,
+			{ expiresIn: process.env.jwtRefreshExpiration }
+		);
+	} catch (err) {
+		return next(new HttpError(
+			`Signing up failed, please try again later. ${err.message}`, 500
+		));
+	}
+
+	try {
+		res.cookie("refreshToken", refreshToken, {
+			httpOnly: true,
+			path: "/api/auth/refreshToken",
+			maxAge: process.env.jwtRefreshExpiration,
+		});
+	} catch (err) {
+		return next(new HttpError(
+			`Signing up failed, please try again later. ${err.message}`, 500
 		));
 	}
 
@@ -149,43 +160,67 @@ const login = async (req, res, next) => {
 	});
 };
 
-const refreshToken = async (req, res) => {
-	const { refreshToken: requestToken } = req.body;
+const logout = async (req, res, next) => {
+	try {
+		res.clearCookie("refreshToken", { path: "/api/auth/refreshToken" });
+		return res.json({ msg: "Logged out!" });
+	} catch (error) {
+		return next(new HttpError(
+			`Log out failed, please try again later. ${err.message}`, 500
+		));
+	}
+};
 
-	if (requestToken == null) {
-		return res.status(403).json({ message: "Refresh Token is required!" });
+const refreshToken = async (req, res, next) => {
+	let refreshToken;
+	try {
+		// refreshToken = req.headers.authorization.split(' ')[1];
+		refreshToken = req.cookie.refreshToken;
+		if (!refreshToken) {
+			return next(new HttpError(
+				'Access cookie failed, please try again later.', 401
+			));
+		}
+	} catch (err) {
+		return next(new HttpError(
+			`Refresh token failed, please log in and try again later. ${err.message}`, 401
+		));
 	}
 
 	try {
-		let refreshToken = await RefreshToken.findOne({ token: requestToken });
-
-		if (!refreshToken) {
-			res.status(403).json({ message: "Refresh token is not in database!" });
-			return;
+		const decodedToken = jwt.verify(refreshToken, process.env.ACCESS_TOKEN_SECRET);
+		console.log(decodedToken);
+		let user = await User.findById(decodedToken.userId).select("-password");
+		if (!user) {
+			return next(new HttpError(
+				'Invalid credentials', 401
+			));
 		}
 
-		if (RefreshToken.verifyExpiration(refreshToken)) {
-			RefreshToken.findByIdAndRemove(refreshToken._id, { useFindAndModify: false }).exec();
-
-			res.status(403).json({
-				message: "Refresh token was expired. Please make a new login request",
-			});
-			return;
+		let accessToken;
+		try {
+			accessToken = jwt.sign(
+				{ userId: user.id },
+				process.env.ACCESS_TOKEN_SECRET,
+				{ expiresIn: process.env.jwtExpiration }
+			);
+		} catch (err) {
+			return next(new HttpError(
+				`Logging in failed, please try again later. ${err.message}`, 500
+			));
 		}
 
-		let newAccessToken = jwt.sign({ id: refreshToken.user._id }, process.env.ACCESS_TOKEN_SECRET, {
-			expiresIn: process.env.jwtExpiration,
-		});
-
-		return res.status(200).json({
-			accessToken: newAccessToken,
-			refreshToken: refreshToken.token,
+		res.json({
+			accessToken: accessToken
 		});
 	} catch (err) {
-		return res.status(500).send({ message: err.message });
+		return next(new HttpError(
+			`Refresh token failed, please try again later. ${err.message}`, 401
+		));
 	}
 };
 
 exports.signup = signup;
 exports.login = login;
+exports.logout = logout;
 exports.refreshToken = refreshToken;
